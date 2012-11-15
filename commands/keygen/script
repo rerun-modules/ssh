@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+#
+#/ command: ssh:keygen: "Generate authentication key"
+#
+#/ usage: rerun ssh:keygen [ --type <dsa>] [ --passphrase <>] [ --key-file <$HOME/.ssh/id_dsa>] [ --force <false>] 
+#
+#/ rerun env variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option variables: TYPE PASSPHRASE KEY_FILE FORCE
+
+# Read module function library.
+. $RERUN_MODULE_DIR/lib/functions.sh || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+# Error handling
+# ---------------
+# * Trap calls `rerun_die` with standard message.
+# * Exit upon command errors or accessing unset variables.
+#   * See [set](http://ss64.com/bash/set.html)
+trap 'rerun_die "*** command failed: ssh:keygen. ***"' ERR
+set -o nounset -o pipefail
+
+# Parse the command options.
+[[ -r $RERUN_MODULE_DIR/commands/keygen/options.sh ]] && {
+    . $RERUN_MODULE_DIR/commands/keygen/options.sh || rerun_die "Failed loading options parser."
+    rerun_options_parse "$@"
+}
+
+
+# ------------------------------
+# Your implementation goes here.
+# ------------------------------
+
+# First check whether the key file already exists and whether it should be overridden.
+if [[ ${FORCE} = "false" && -e ${KEY_FILE} ]]
+then
+  rerun_die "\"${KEY_FILE}" exists. use \"--force true\" to override.\"
+fi
+
+# Remove the key file pair if it already exists.
+rm -f ${KEY_FILE} ${KEY_FILE}.pub
+
+# Generate the key file non-interactively.
+ssh-keygen -q -t ${TYPE} -N "${PASSPHRASE}" -f ${KEY_FILE}
+
+exit $?
+
+# Done
