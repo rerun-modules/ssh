@@ -63,28 +63,42 @@ rerun_options_parse "$@"
 # Put the command implementation here.
 # - - -
 
-# Eliminate other entries for this key, if necessary.
 if [[ -r ${AUTHORIZED_KEYS_FILE} ]]
 then
-  TMP_AUTHORIZED_KEYS_FILE=$(mktemp)
+  # Eliminate other entries for this key, if they are not identical to the one specified.
 
-  # Ignore the exit code since it's an indeterminate indication of success in this case.
-  if fgrep -v "${PUBLIC_KEY}" ${AUTHORIZED_KEYS_FILE} > ${TMP_AUTHORIZED_KEYS_FILE}
+  if grep -q "^ssh-${TYPE} ${PUBLIC_KEY} ${COMMENT}$" ${AUTHORIZED_KEYS_FILE}
   then
-    :
-  fi
+    echo "INFO: entry already exists, skipping" 1>&2
+  else
+    TMP_AUTHORIZED_KEYS_FILE=$(mktemp)
 
-  # Only copy the file if it has changed.
-  if ! cmp -s ${TMP_AUTHORIZED_KEYS_FILE} ${AUTHORIZED_KEYS_FILE}
-  then
-    cp -p ${TMP_AUTHORIZED_KEYS_FILE} ${AUTHORIZED_KEYS_FILE}
-  fi
+    # Ignore the exit code since it's an indeterminate indication of success in this case.
+    if fgrep -v "${PUBLIC_KEY}" ${AUTHORIZED_KEYS_FILE} > ${TMP_AUTHORIZED_KEYS_FILE}
+    then
+      :
+    fi
 
-  rm -f ${TMP_AUTHORIZED_KEYS_FILE}
+    # Only copy the file if it has changed.
+    if ! cmp -s ${TMP_AUTHORIZED_KEYS_FILE} ${AUTHORIZED_KEYS_FILE}
+    then
+      cp -p ${TMP_AUTHORIZED_KEYS_FILE} ${AUTHORIZED_KEYS_FILE}
+    fi
+
+    rm -f ${TMP_AUTHORIZED_KEYS_FILE}
+
+    # Compose and append the entry to the specified authorized keys file.
+    echo "ssh-${TYPE} ${PUBLIC_KEY} ${COMMENT}" >> ${AUTHORIZED_KEYS_FILE}
+
+    echo "INFO: replaced existing entrie(s)" 1>&2
+  fi
+else
+  # Create the authorized key file with conventional permissions, if it doesn't already exist.
+  echo "ssh-${TYPE} ${PUBLIC_KEY} ${COMMENT}" > ${AUTHORIZED_KEYS_FILE} 
+  chmod 600 ${AUTHORIZED_KEYS_FILE}
+
+  echo "INFO: added entry to new authorized key file" 1>&2
 fi
-
-# Compose and append the entry to the specified authorized keys file.
-echo "ssh-${TYPE} ${PUBLIC_KEY} ${COMMENT}" >> ${AUTHORIZED_KEYS_FILE}
 
 # Done. Exit with last command exit status.
 exit $?
