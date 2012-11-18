@@ -63,12 +63,19 @@ rerun_options_parse "$@"
 # Put the command implementation here.
 # - - -
 
-# Eliminate other entries for this key, if necessary:
+# Eliminate other entries for this key, if necessary.
 if [[ -r ${AUTHORIZED_KEYS_FILE} ]]
 then
   TMP_AUTHORIZED_KEYS_FILE=$(mktemp)
 
+  # Ignore the exit code since it's an indeterminate indication of success in this case.
   if fgrep -v "${PUBLIC_KEY}" ${AUTHORIZED_KEYS_FILE} > ${TMP_AUTHORIZED_KEYS_FILE}
+  then
+    :
+  fi
+
+  # Only copy the file if it has changed.
+  if ! cmp -s ${TMP_AUTHORIZED_KEYS_FILE} ${AUTHORIZED_KEYS_FILE}
   then
     cp -p ${TMP_AUTHORIZED_KEYS_FILE} ${AUTHORIZED_KEYS_FILE}
   fi
