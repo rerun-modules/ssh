@@ -34,7 +34,7 @@ set -o nounset -o pipefail
 # First check whether the key file already exists and whether it should be overridden.
 if [[ ${FORCE} = "false" && -e ${KEY_FILE} ]]
 then
-  rerun_die "\"${KEY_FILE}" exists. use \"--force true\" to override.\"
+  rerun_die "\"${KEY_FILE}\" exists. use \"--force true\" to override."
 fi
 
 # Remove the key file pair if it already exists.
