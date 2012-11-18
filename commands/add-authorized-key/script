@@ -9,15 +9,15 @@
 # The `command` and `usage` comments describe the command
 # and show its options.
 # 
-#/ command: ssh:keygen: "Generate authentication key"
-#/ usage: rerun ssh:keygen [ --type <dsa>] [ --passphrase <>] [ --key-file <$HOME/.ssh/id_dsa>] [ --force <false>] 
+#/ command: ssh:add-authorized-key: "Add a key to the authorized_keys file"
+#/ usage: rerun ssh:add-authorized-key  --public-key <> [ --authorized-keys-file <$HOME/.ssh/authorized_keys>] [ --type <dsa>] [ --comment <>] 
 
 # Load common functions
 # ---------------------
 
 # Load the function library for this module.
 # This loads rerun functions, too.
-. $RERUN_MODULE_DIR/lib/functions.sh keygen || { 
+. $RERUN_MODULE_DIR/lib/functions.sh add-authorized-key || { 
   echo >&2 "Failed loading function library." ; exit 1 ; 
 }
 
@@ -29,7 +29,7 @@
 # Trap errors and exit. The call to `rerun_die` will print the
 # the error message and exit with the error command exit status. 
 
-trap 'rerun_die $? "*** command failed: ssh:keygen. ***"' ERR
+trap 'rerun_die $? "*** command failed: ssh:add-authorized-key. ***"' ERR
 
 # Run [set] `nounset` to treat unset variables as errors. Set [pipefail]
 # so a pipeline return status is the value of the last 
@@ -47,7 +47,7 @@ set -o nounset -o pipefail
 # declared by `rerun` or by the option parser function.
 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
-#/ option-variables: TYPE PASSPHRASE KEY_FILE FORCE
+#/ option-variables: PUBLIC_KEY AUTHORIZED_KEYS_FILE TYPE COMMENT
 
 # The `rerun_options_parse` function processes the command line
 # arguments. Each accepted command line flag results in setting 
@@ -63,18 +63,22 @@ rerun_options_parse "$@"
 # Put the command implementation here.
 # - - -
 
-# First check whether the key file already exists and whether it should be overridden.
-if [[ ${FORCE} = "false" && -e ${KEY_FILE} ]]
+# Eliminate other entries for this key, if necessary:
+if [[ -r ${AUTHORIZED_KEYS_FILE} ]]
 then
-  rerun_die "\"${KEY_FILE}\" exists. use \"--force true\" to override."
+  TMP_AUTHORIZED_KEYS_FILE=$(mktemp)
+
+  if fgrep -v "${PUBLIC_KEY}" ${AUTHORIZED_KEYS_FILE} > ${TMP_AUTHORIZED_KEYS_FILE}
+  then
+    cp -p ${TMP_AUTHORIZED_KEYS_FILE} ${AUTHORIZED_KEYS_FILE}
+  fi
+
+  rm -f ${TMP_AUTHORIZED_KEYS_FILE}
 fi
 
-# Remove the key file pair if it already exists.
-rm -f ${KEY_FILE} ${KEY_FILE}.pub
+# Compose and append the entry to the specified authorized keys file.
+echo "ssh-${TYPE} ${PUBLIC_KEY} ${COMMENT}" >> ${AUTHORIZED_KEYS_FILE}
 
-# Generate the key file non-interactively.
-ssh-keygen -q -t ${TYPE} -N "${PASSPHRASE}" -f ${KEY_FILE}
-
+# Done. Exit with last command exit status.
 exit $?
 
-# Done
