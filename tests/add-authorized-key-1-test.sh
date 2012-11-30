@@ -26,12 +26,12 @@ it_works_with_a_new_key_and_a_duplicate() {
   COMMENT=$(cut -d' ' -f3- < ${TMPDIR}/id_dsa.pub)
 
   # Add the key to a new empty authorized_keys file and make sure its the same as the original public key:
-  rerun ssh:add-authorized-key --public-key "${PUBLIC_KEY}" --authorized-keys-file ${TMPDIR}/authorized_keys --type ${TYPE} --comment ${COMMENT}
-  diff ${TMPDIR}/id_dsa.pub ${TMPDIR}/authorized_keys
+  rerun ssh:add-authorized-key --public-key "${PUBLIC_KEY}" --authorized-keys-file ${TMPDIR}/.ssh/authorized_keys --type ${TYPE} --comment ${COMMENT}
+  diff ${TMPDIR}/id_dsa.pub ${TMPDIR}/.ssh/authorized_keys
 
   # Add the key a second time and make sure its the same as the original public key thus proving a duplicate entry was avoided:
-  rerun ssh:add-authorized-key --public-key "${PUBLIC_KEY}" --authorized-keys-file ${TMPDIR}/authorized_keys --type ${TYPE} --comment ${COMMENT}
-  diff ${TMPDIR}/id_dsa.pub ${TMPDIR}/authorized_keys
+  rerun ssh:add-authorized-key --public-key "${PUBLIC_KEY}" --authorized-keys-file ${TMPDIR}/.ssh/authorized_keys --type ${TYPE} --comment ${COMMENT}
+  diff ${TMPDIR}/id_dsa.pub ${TMPDIR}/.ssh/authorized_keys
 
   rm -rf ${TMPDIR}
 }

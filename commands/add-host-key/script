@@ -93,6 +93,9 @@ then
     echo "INFO: replaced existing entrie(s)" 1>&2
   fi
 else
+  # Make sure the authorized_keys directory exists:
+  [[ -d $(dirname ${KNOWN_HOSTS_FILE}) ]] || mkdir $(dirname ${KNOWN_HOSTS_FILE}) && chmod 700 $(dirname ${KNOWN_HOSTS_FILE})
+
   # Create the known hosts file with default permissions, if it doesn't already exist.
   echo "${HOSTNAME} ssh-${TYPE} ${PUBLIC_KEY}" > ${KNOWN_HOSTS_FILE} 
 

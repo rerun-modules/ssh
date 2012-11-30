@@ -25,19 +25,19 @@ it_works_with_a_new_key_and_a_duplicate() {
   COMMENT=$(cut -d' ' -f3- < ${TMPDIR}/id_dsa.pub)
 
   # Add the key to a new empty known hosts file and make sure its the same as the original public key:
-  rerun ssh:add-host-key --public-key "${PUBLIC_KEY}" --known-hosts-file ${TMPDIR}/known_hosts --type ${TYPE} --hostname localhost
+  rerun ssh:add-host-key --public-key "${PUBLIC_KEY}" --known-hosts-file ${TMPDIR}/.ssh/known_hosts --type ${TYPE} --hostname localhost
   echo "localhost ssh-${TYPE} ${PUBLIC_KEY}" > ${TMPDIR}/known_hosts.test
-  diff ${TMPDIR}/known_hosts.test ${TMPDIR}/known_hosts
+  diff ${TMPDIR}/known_hosts.test ${TMPDIR}/.ssh/known_hosts
 
   # Add the key a second time and make sure its the same as the original public key thus proving a duplicate entry was avoided:
-  rerun ssh:add-host-key --public-key "${PUBLIC_KEY}" --known-hosts-file ${TMPDIR}/known_hosts --type ${TYPE} --hostname localhost
+  rerun ssh:add-host-key --public-key "${PUBLIC_KEY}" --known-hosts-file ${TMPDIR}/.ssh/known_hosts --type ${TYPE} --hostname localhost
   echo "localhost ssh-${TYPE} ${PUBLIC_KEY}" > ${TMPDIR}/known_hosts.test
-  diff ${TMPDIR}/known_hosts.test ${TMPDIR}/known_hosts
+  diff ${TMPDIR}/known_hosts.test ${TMPDIR}/.ssh/known_hosts
 
   # Add the key a third time with a different hostname proving the existing entry is replaced:
-  rerun ssh:add-host-key --public-key "${PUBLIC_KEY}" --known-hosts-file ${TMPDIR}/known_hosts --type ${TYPE} --hostname $HOSTNAME
+  rerun ssh:add-host-key --public-key "${PUBLIC_KEY}" --known-hosts-file ${TMPDIR}/.ssh/known_hosts --type ${TYPE} --hostname $HOSTNAME
   echo "$HOSTNAME ssh-${TYPE} ${PUBLIC_KEY}" > ${TMPDIR}/known_hosts.test
-  diff ${TMPDIR}/known_hosts.test ${TMPDIR}/known_hosts
+  diff ${TMPDIR}/known_hosts.test ${TMPDIR}/.ssh/known_hosts
 
   rm -rf ${TMPDIR}
 }

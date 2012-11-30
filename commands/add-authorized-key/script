@@ -93,6 +93,9 @@ then
     echo "INFO: replaced existing entrie(s)" 1>&2
   fi
 else
+  # Make sure the authorized_keys directory exists:
+  [[ -d $(dirname ${AUTHORIZED_KEYS_FILE}) ]] || mkdir $(dirname ${AUTHORIZED_KEYS_FILE}) && chmod 700 $(dirname ${AUTHORIZED_KEYS_FILE})
+
   # Create the authorized key file with conventional permissions, if it doesn't already exist.
   echo "ssh-${TYPE} ${PUBLIC_KEY} ${COMMENT}" > ${AUTHORIZED_KEYS_FILE} 
   chmod 600 ${AUTHORIZED_KEYS_FILE}
