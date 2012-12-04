@@ -3,4 +3,4 @@
 # Sun Nov 18 08:46:36 PST 2012
 NAME=add-host-key
 DESCRIPTION="Adds a public key to the specified known hosts file"
-OPTIONS="hostname public-key type known-hosts-file"
+OPTIONS="hostname type known-hosts-file host-key"

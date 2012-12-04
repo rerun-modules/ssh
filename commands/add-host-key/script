@@ -10,7 +10,7 @@
 # and show its options.
 # 
 #/ command: ssh:add-host-key: "Adds a public key to the specified known hosts file"
-#/ usage: rerun ssh:add-host-key  --hostname <>  --public-key <> [ --type <dsa>] [ --known-hosts-file <$HOME/.ssh/known_hosts>] 
+#/ usage: rerun ssh:add-host-key  --hostname <> [ --type <dsa>] [ --known-hosts-file <$HOME/.ssh/known_hosts>] [ --host-key <>] 
 
 # Load common functions
 # ---------------------
@@ -47,7 +47,7 @@ set -o nounset -o pipefail
 # declared by `rerun` or by the option parser function.
 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
-#/ option-variables: HOSTNAME PUBLIC_KEY TYPE KNOWN_HOSTS_FILE
+#/ option-variables: HOSTNAME TYPE KNOWN_HOSTS_FILE HOST_KEY
 
 # The `rerun_options_parse` function processes the command line
 # arguments. Each accepted command line flag results in setting 
@@ -63,18 +63,24 @@ rerun_options_parse "$@"
 # Put the command implementation here.
 # - - -
 
+# If the host key was not provided on the command line use ssh-keyscan(1) to acquire it.
+if [[ -z $HOST_KEY ]]
+then
+  HOST_KEY=$(ssh-keyscan -t ${TYPE} ${HOSTNAME} 2>/dev/null | cut -d' ' -f3)
+fi
+
 if [[ -r ${KNOWN_HOSTS_FILE} ]]
 then
   # Eliminate other entries for this key, if they are not identical to the one specified.
 
-  if grep -q "^${HOSTNAME} ssh-${TYPE} ${PUBLIC_KEY}$" ${KNOWN_HOSTS_FILE}
+  if grep -q "^${HOSTNAME} ssh-${TYPE} ${HOST_KEY}$" ${KNOWN_HOSTS_FILE}
   then
     echo "INFO: entry already exists, skipping" 1>&2
   else
     TMP_KNOWN_HOSTS_FILE=$(mktemp)
 
     # Ignore the exit code since it's an indeterminate indication of success in this case.
-    if fgrep -v "${PUBLIC_KEY}" ${KNOWN_HOSTS_FILE} > ${TMP_KNOWN_HOSTS_FILE}
+    if fgrep -v "${HOST_KEY}" ${KNOWN_HOSTS_FILE} > ${TMP_KNOWN_HOSTS_FILE}
     then
       :
     fi
@@ -88,7 +94,7 @@ then
     rm -f ${TMP_KNOWN_HOSTS_FILE}
 
     # Compose and append the entry to the specified known hosts file.
-    echo "${HOSTNAME} ssh-${TYPE} ${PUBLIC_KEY}" >> ${KNOWN_HOSTS_FILE}
+    echo "${HOSTNAME} ssh-${TYPE} ${HOST_KEY}" >> ${KNOWN_HOSTS_FILE}
 
     echo "INFO: replaced existing entrie(s)" 1>&2
   fi
@@ -97,7 +103,7 @@ else
   [[ -d $(dirname ${KNOWN_HOSTS_FILE}) ]] || mkdir $(dirname ${KNOWN_HOSTS_FILE}) && chmod 700 $(dirname ${KNOWN_HOSTS_FILE})
 
   # Create the known hosts file with default permissions, if it doesn't already exist.
-  echo "${HOSTNAME} ssh-${TYPE} ${PUBLIC_KEY}" > ${KNOWN_HOSTS_FILE} 
+  echo "${HOSTNAME} ssh-${TYPE} ${HOST_KEY}" > ${KNOWN_HOSTS_FILE} 
 
   echo "INFO: added entry to new known hosts file" 1>&2
 fi

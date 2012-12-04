@@ -3,7 +3,7 @@
 NAME=ssh
 DESCRIPTION="Rerun module for managing secure shell client and server usage"
 INTERPRETER="bash"
-VERSION=1.0.1
+VERSION=1.1.1
 REQUIRES=
 EXTERNALS=
 META_MODULE=
